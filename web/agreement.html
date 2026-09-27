@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cleen.cpp — Agreement &amp; Data Terms</title>
+<meta name="description" content="The agreement for using cleen.cpp: free local use, optional paid speed add-ons, and the anonymized usage data that helps cleen improve over time.">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f5f7f4; --bg-elev:#ffffff; --bg-sunken:#ecefe9;
+  --ink:#101410; --ink-soft:#4b514a; --ink-faint:#7a8079;
+  --line:rgba(16,20,16,.10); --line-strong:rgba(16,20,16,.17);
+  --clean:#0e9d6e; --clean-soft:#e3f6ee; --luxe:#a9782a; --luxe-soft:#f6efdf;
+  --font-sans:'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --maxw:820px; --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#070a09; --bg-elev:#0d1211; --bg-sunken:#050807;
+    --ink:#e9f0ec; --ink-soft:#a5afa8; --ink-faint:#6d766f;
+    --line:rgba(255,255,255,.09); --line-strong:rgba(255,255,255,.16);
+    --clean:#3ee0a6; --clean-soft:rgba(62,224,166,.10); --luxe:#e6c079; --luxe-soft:rgba(230,192,121,.10);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#070a09; --bg-elev:#0d1211; --bg-sunken:#050807;
+  --ink:#e9f0ec; --ink-soft:#a5afa8; --ink-faint:#6d766f;
+  --line:rgba(255,255,255,.09); --line-strong:rgba(255,255,255,.16);
+  --clean:#3ee0a6; --clean-soft:rgba(62,224,166,.10); --luxe:#e6c079; --luxe-soft:rgba(230,192,121,.10);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--clean);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{width:100%;max-width:var(--maxw);margin-inline:auto;padding:clamp(28px,6vw,64px) clamp(18px,5vw,32px)}
+header.bar{border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 85%,transparent);position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}
+.bar .in{max-width:var(--maxw);margin-inline:auto;padding:.9rem clamp(18px,5vw,32px);display:flex;align-items:center;gap:1rem}
+.brand{font-weight:600;letter-spacing:-.02em;font-size:1.05rem}
+.brand b{font-weight:700}.brand .dot{color:var(--clean)}
+.brand small{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-left:.4rem}
+.bar .back{margin-left:auto;font-size:.9rem;color:var(--ink-soft)}
+h1{font-size:clamp(1.8rem,5vw,2.5rem);letter-spacing:-.03em;margin:.2rem 0 .4rem}
+h2{font-size:clamp(1.2rem,3vw,1.5rem);letter-spacing:-.02em;margin:2.4rem 0 .7rem;padding-top:1rem;border-top:1px solid var(--line)}
+h2:first-of-type{border-top:none}
+p{margin:.7rem 0}
+.meta{font-family:var(--font-mono);font-size:.76rem;letter-spacing:.04em;color:var(--ink-faint);text-transform:uppercase}
+.summary{background:var(--clean-soft);border:1px solid color-mix(in srgb,var(--clean) 26%,transparent);border-radius:var(--radius);padding:1.2rem 1.4rem;margin:1.8rem 0}
+.summary h3{margin:.1rem 0 .6rem;font-size:1.05rem;display:flex;align-items:center;gap:.5em}
+.summary ul{margin:.4rem 0 0;padding-left:1.2rem}
+.summary li{margin:.4rem 0;color:var(--ink)}
+.summary li b{color:var(--ink)}
+ul.body{padding-left:1.2rem}
+ul.body li{margin:.45rem 0;color:var(--ink-soft)}
+ul.body li b{color:var(--ink)}
+.mono{font-family:var(--font-mono);font-size:.9em;background:var(--bg-sunken);padding:.08em .4em;border-radius:5px}
+.callout{border-left:3px solid var(--luxe);background:var(--luxe-soft);padding:.8rem 1.1rem;border-radius:0 10px 10px 0;margin:1.2rem 0;color:var(--ink)}
+.muted{color:var(--ink-faint);font-size:.9rem}
+footer{border-top:1px solid var(--line);margin-top:3rem;padding-top:1.4rem;color:var(--ink-faint);font-size:.82rem}
+footer a{color:var(--ink-soft)}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="in">
+    <span class="brand"><b>cleen</b><span class="dot">.cpp</span><small>a luxucleen project</small></span>
+    <a class="back" href="index.html">&larr; Back to cleen.cpp</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="meta">Agreement &amp; Data Terms · Version 1.0 · Effective 2026-09-19</p>
+  <h1>Using cleen.cpp</h1>
+  <p>This Agreement covers how you may use cleen.cpp, what it costs, and — importantly — how your
+  use helps cleen improve. Please read the summary; it is the part most people care about.</p>
+
+  <div class="summary">
+    <h3>🌱 The short version</h3>
+    <ul>
+      <li><b>cleen.cpp is free to download and run locally.</b> No account or key needed to start.</li>
+      <li><b>Speed is the paid part.</b> Bursting to Luxucleen Cloud for high-speed generation is an optional add-on you pay for only when you use it. Everything local stays free.</li>
+      <li><b>Free use is powered by data.</b> Because the local product is free, cleen collects
+      anonymized usage and diagnostic data. That data is stored and used to improve cleen, find
+      and fix flaws, and ship better updates. <b>cleen is a living project that grows over time
+      with its community's data</b> — that is the trade for a free, always-improving tool.</li>
+      <li><b>By installing or using cleen, you agree to this.</b></li>
+    </ul>
+  </div>
+
+  <h2>1. License to use</h2>
+  <ul class="body">
+    <li><b>Local use is free</b> for personal and commercial projects. You may install cleen on your own machines and point your own tools at your local cleen server.</li>
+    <li>cleen.cpp builds on open-source runtimes (the llama.cpp family) and open models; those components keep their own licenses, which you also agree to honor.</li>
+    <li>You may not resell cleen itself as a competing hosted service, remove its notices, or use it for unlawful purposes.</li>
+  </ul>
+
+  <h2>2. Free, paid speed, and the cloud</h2>
+  <ul class="body">
+    <li><b>Local tier — free forever.</b> Inference runs on your own hardware. Slower on weak machines, but it costs nothing.</li>
+    <li><b>Speed add-ons — Luxucleen Cloud.</b> When you want high-speed generation, cleen can burst the <em>same model</em> to Luxucleen Cloud. This is a paid, usage-based add-on: you pay only for the speed you actually use, and rates are shown before you buy. You are never charged for local use.</li>
+    <li>When you use a cloud route, the content of that request is sent to the cloud provider to be processed — that is how the cloud speed works. Local routes are processed locally.</li>
+  </ul>
+
+  <h2>3. Data — how cleen learns and improves</h2>
+  <p>cleen is offered free locally because usage data makes it better over time. By using cleen, you agree that cleen may collect and store:</p>
+  <ul class="body">
+    <li><b>Diagnostic data</b> — crashes, errors, and performance metrics, so flaws can be found and fixed.</li>
+    <li><b>Usage data</b> — which features and commands are used, routing decisions (local vs cloud), model and version, and a general hardware profile used to tune performance for machines like yours.</li>
+    <li><b>Aggregate interaction data</b> — anonymized, aggregated signals about how cleen is used, to guide updates and improve model behavior. In short: <em>cleen is a concept that grows with people's data.</em></li>
+  </ul>
+  <div class="callout">
+    We aim to keep collected data anonymized and to use it for one purpose: making cleen better.
+    We do not sell your personal data. Cloud-route request content is handled by the cloud provider
+    only to fulfill that request.
+  </div>
+  <p class="muted">Where technically available, non-essential telemetry can be limited via cleen's
+  settings; essential diagnostics needed to keep the product working and to honor this Agreement may
+  still be collected. For data questions, contact the address in Section 7.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul class="body">
+    <li>Use cleen lawfully, and don't send content to cloud routes that you don't have the right to process.</li>
+    <li>Keep any provider API keys you add to cleen secure; you are responsible for their use and billing.</li>
+    <li>You are responsible for reviewing model output before you rely on it.</li>
+  </ul>
+
+  <h2>5. No warranty &amp; limitation of liability</h2>
+  <p>cleen.cpp is provided "as is," without warranties of any kind. AI models can be wrong. To the
+  maximum extent permitted by law, Luxucleen is not liable for any indirect or consequential damages
+  arising from your use of cleen, and total liability is limited to the amounts you paid for the
+  cloud add-on in the prior three months (which is zero for purely local use).</p>
+
+  <h2>6. Changes</h2>
+  <p>cleen is a growing project, so this Agreement may change as it evolves. Material changes will be
+  posted here with a new version number and effective date. Continuing to use cleen after a change
+  means you accept the updated Agreement.</p>
+
+  <h2>7. Contact</h2>
+  <p>Questions about this Agreement or your data: <a href="mailto:hello@luxucleen.com">hello@luxucleen.com</a>.</p>
+
+  <footer>
+    <p>© 2026 Luxucleen. Made clean. · <a href="index.html">cleen.cpp</a></p>
+    <p class="muted">This Agreement is a plain-language summary of intended terms and will be finalized with counsel before public launch.</p>
+  </footer>
+</main>
+
+<script>
+(function(){
+  try{ var s=localStorage.getItem("cleen-theme"); if(s==="dark"||s==="light") document.documentElement.setAttribute("data-theme",s); }catch(e){}
+})();
+</script>
+</body>
+</html>

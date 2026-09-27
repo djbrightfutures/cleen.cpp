@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# cleen.cpp launcher (macOS/Linux) - runs from anywhere, keeps your working dir.
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
+export PYTHONPATH="$DIR:$PYTHONPATH"
+exec python3 -m cleen "$@"
