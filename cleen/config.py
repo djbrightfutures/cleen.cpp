@@ -1,7 +1,7 @@
 """cleen.cpp configuration: the model catalog + the provider registry.
 
 cleen.cpp is the BRAND (a friendlier, hybrid llama.cpp). The local runtime is the
-llama.cpp family, served the way Ollama packages llama.cpp -- or a llama.cpp
+llama.cpp family, served the way the default runtime packages llama.cpp -- or a llama.cpp
 `llama-server` directly. The cloud tier is any OpenAI-compatible provider we resell.
 
 Keys are read from the environment (and an optional local .env) at RUNTIME and are
@@ -50,12 +50,24 @@ _load_env()
 
 # --------------------------------------------------------------------------------
 # Local runtime (free, runs on your machine).
-# Default speaks the Ollama HTTP API (which runs on llama.cpp under the hood). A
+# Default speaks the local runtime's HTTP API (which runs on llama.cpp under the hood). A
 # standalone download can point CLEEN_LOCAL_BASE at a llama.cpp `llama-server`
 # (OpenAI-compatible) instead -- same interface, no code change.
 # --------------------------------------------------------------------------------
-LOCAL_KIND = os.environ.get("CLEEN_LOCAL_KIND", "ollama")          # ollama | llamacpp
+LOCAL_KIND = os.environ.get("CLEEN_LOCAL_KIND", "local")           # local | llamacpp
 LOCAL_BASE = os.environ.get("CLEEN_LOCAL_BASE", "http://127.0.0.1:11434")
+
+# Per-model LOCAL base override (the owner, 2026-09-30): a JSON map
+#   {"<substring of the local model id>": {"base": "...", "kind": "local|llamacpp"}}
+# so ONE model can run on a DIFFERENT local engine than the default. Built for the
+# uncensored MTP GGUF that the default loader rejects but our llamacpp-cuda (via
+# llama-swap) loads -- that one entry points at llama-swap while every other local
+# model stays on the default runtime. Default "{}" = no-op (never regresses existing routing).
+try:
+    LOCAL_MODEL_BASES = __import__("json").loads(
+        os.environ.get("CLEEN_LOCAL_MODEL_BASES", "") or "{}")
+except Exception:
+    LOCAL_MODEL_BASES = {}
 
 
 # --------------------------------------------------------------------------------
@@ -89,10 +101,29 @@ PROVIDERS = {
         "key_env": ["OPENAI_API_KEY"],
         "label": "OpenAI",
     },
+    "anthropic": {  # Claude. Anthropic serves an OpenAI-shaped /chat/completions at this base,
+                    # so it drops into the same client as every other provider here.
+                    # Inert until ANTHROPIC_API_KEY is set (exactly like gemini above), and it
+                    # NEVER preempts local: mode decides local-vs-cloud, this list only decides
+                    # WHICH cloud is used once a cloud call was already chosen.
+        "base": "https://api.anthropic.com/v1",
+        "key_env": ["ANTHROPIC_API_KEY", "CLAUDE_API_KEY"],
+        "label": "Anthropic Claude",
+    },
+    "deepseek": {   # DeepSeek -- OpenAI-compatible, cheap + strong (V3.2 chat / R1 reasoner).
+                    # Inert until DEEPSEEK_API_KEY is set (exactly like gemini/anthropic above);
+                    # NEVER preempts local. base includes /v1 so the client appends
+                    # /chat/completions -> https://api.deepseek.com/v1/chat/completions.
+        "base": "https://api.deepseek.com/v1",
+        "key_env": ["DEEPSEEK_API_KEY", "DEEPSEEK_KEY"],
+        "label": "DeepSeek",
+    },
 }
-# Auto-pick order: first provider WITH A KEY wins. Cerebras (fastest) first, then
-# NIM (our default with credit), then the rest.
-PROVIDER_ORDER = ["gemini", "cerebras", "nim", "openrouter", "openai"]
+# Auto-pick order: first provider WITH A KEY wins. the owner 2026-10-23: "make it work with
+# both claude's api and local" -> anthropic leads the CLOUD list, while LOCAL stays the
+# default engine (CLEEN_MODE=local in .env). Cloud is only reached on an explicit --cloud/
+# --fast, or when a local engine is genuinely unavailable.
+PROVIDER_ORDER = ["anthropic", "gemini", "deepseek", "cerebras", "nim", "openrouter", "openai"]
 
 
 # --------------------------------------------------------------------------------
@@ -103,7 +134,13 @@ PROVIDER_ORDER = ["gemini", "cerebras", "nim", "openrouter", "openai"]
 # providers that host it (Cerebras = the pitch's ~2000 tok/s tier, OpenRouter), and to
 # that provider's best equivalent otherwise (NIM has no Qwen, so its strongest coder) --
 # so `cleen run --cloud` never 404s, whatever key you hold. "default" = the ideal id.
-# (Cerebras/OpenRouter ids are best-known; cleen verifies them the first time you add a key.)
+# VERIFIED, NOT "BEST-KNOWN" (2026-10-25). This comment used to say the ids were
+# best-known and would be verified "the first time you add a key" - deferring the check
+# to the worst possible moment, a 404 mid-task. `python -m cleen.model_check` now audits
+# every OpenRouter-shaped id against the public catalogue with NO KEY, and found TWO
+# dead ones sitting here: qwen/qwen3-235b-a22b (retired in favour of the dated
+# ...-a22b-2507) and qwen/qwen3-coder-480b-a35b-instruct (never existed under that id).
+# Run it after touching this table; it exits non-zero on a name nobody serves.
 MODELS = {
     "cleen-coder": {        # default: Qwen coder -- the "amazing free model" from the pitch
         "local": "qwen2.5-coder:7b",
@@ -113,6 +150,8 @@ MODELS = {
             "nim":        "nvidia/nemotron-3-super-120b-a12b",
             "openai":     "gpt-4o-mini",
             "gemini":     "gemini-2.5-flash",
+            "anthropic":  "claude-sonnet-5-5",
+            "deepseek":   "deepseek-chat",
             "default":    "qwen/qwen3-coder",
         },
         "desc": "Qwen coder - free & fast locally (fits a 6GB GPU), Qwen3-Coder in the cloud.",
@@ -124,7 +163,9 @@ MODELS = {
             "openrouter": "qwen/qwen3-coder",
             "nim":        "nvidia/nemotron-3-super-120b-a12b",
             "gemini":     "gemini-2.5-pro",
-            "default":    "qwen/qwen3-coder-480b-a35b-instruct",
+            "anthropic":  "claude-opus-5-5",
+            "deepseek":   "deepseek-chat",
+            "default":    "qwen/qwen3-coder",
         },
         "desc": "Qwen3-Coder MoE - runs on modest hardware locally (few active params), 480B in the cloud.",
     },
@@ -133,11 +174,45 @@ MODELS = {
         "cloud": {
             "cerebras":   "qwen-3-235b-a22b-instruct",
             "gemini":     "gemini-2.5-flash",
-            "openrouter": "qwen/qwen3-235b-a22b",
+            "openrouter": "qwen/qwen3-235b-a22b-2507",
             "nim":        "nvidia/nemotron-3-super-120b-a12b",
-            "default":    "qwen/qwen3-235b-a22b",
+            "anthropic":  "claude-sonnet-5-5",
+            "deepseek":   "deepseek-chat",
+            "default":    "qwen/qwen3-235b-a22b-2507",
         },
         "desc": "General chat & reasoning.",
+    },
+    "cleen-reason": {       # DeepSeek R1 reasoning -- strongest LOCAL reasoner that fits a 6GB
+                            # GPU: deepseek-r1:7b (already pulled, 4.7GB). DeepSeek reasoner in
+                            # the cloud. For HARD multi-step questions (emits <think> chains,
+                            # slower per-token by design -- send easy/exact work elsewhere).
+        "local": "deepseek-r1:7b",
+        "cloud": {
+            "deepseek":   "deepseek-reasoner",
+            "nim":        "nvidia/nemotron-3-super-120b-a12b",
+            "gemini":     "gemini-2.5-pro",
+            "anthropic":  "claude-opus-5-5",
+            "default":    "deepseek-reasoner",
+        },
+        "desc": "DeepSeek R1 reasoning - deepseek-r1:7b locally (fits 6GB, already installed), DeepSeek reasoner in the cloud. Best for hard multi-step reasoning.",
+    },
+    "cleen-reason-fast": {  # R1 reasoning that FITS a 6GB card alongside a warm model:
+                            # deepseek-r1:1.5b (~2GB). Weaker than r1:7b/cloud, but it RUNS
+                            # locally when the heavy reasoners can't get a GPU slot.
+        "local": "deepseek-r1:1.5b",
+        "cloud": {
+            "deepseek":   "deepseek-reasoner",
+            "default":    "deepseek-reasoner",
+        },
+        "desc": "DeepSeek R1 1.5B - the reasoner that fits 6GB beside a warm model (local, free). Smaller/weaker than cleen-reason; use cleen-reason or the cloud reasoner for strong reasoning.",
+    },
+    "cleen-uncensored": {   # local-only: uncensored Qwen3.8-27B (IQ2_M). No cloud twin.
+        "local": "hf.co/HauhauCS/Qwen3.8-27B-Uncensored-HauhauCS-Aggressive-MTP-GGUF:IQ2_M",
+        # No provider hosts this exact uncensored build, so 'cloud' points back at the
+        # local id (honest passthrough): a forced --cloud call has no censored substitute
+        # silently swapped in, and auto/fast failover lands on local (never-dark). RUN --local.
+        "cloud": "hf.co/HauhauCS/Qwen3.8-27B-Uncensored-HauhauCS-Aggressive-MTP-GGUF:IQ2_M",
+        "desc": "Uncensored Qwen3.8-27B (IQ2_M, ~11GB). LOCAL-ONLY -- run with --local / mode=local.",
     },
 }
 
@@ -199,6 +274,11 @@ CACHE_MAX = _env_num("CLEEN_CACHE_MAX", 512, int)         # max entries (LRU evi
 CACHE_MAXTEMP = _env_num("CLEEN_CACHE_MAXTEMP", 0.3)      # only cache temperature <= this
 CACHE_REPLAY_CHUNK = _env_num("CLEEN_CACHE_REPLAY_CHUNK", 180, int)  # stream-replay chunk size
 
+# 1b) COMPUTE lane: answer EXACT work (arithmetic, numeric comparison) with CODE,
+# before any model -- instant, 0 tokens, always correct. OFF => every request goes
+# to a model (old behavior). Opt a single request out with body "cleen_no_compute":true.
+COMPUTE_ON = _env_bool("CLEEN_COMPUTE", True)
+
 # 2) Smart auto-routing: let 'auto' send easy prompts local, hard ones to fast cloud.
 AUTO_SMART = _env_bool("CLEEN_AUTO_SMART", True)
 AUTO_SMART_LONG_CHARS = _env_num("CLEEN_AUTO_LONG_CHARS", 1600, int)  # long context -> cloud
@@ -206,6 +286,44 @@ AUTO_SMART_LONG_CHARS = _env_num("CLEEN_AUTO_LONG_CHARS", 1600, int)  # long con
 # 3) Failover timeouts (short, so one dead provider doesn't hang the request).
 CLOUD_TIMEOUT = _env_num("CLEEN_CLOUD_TIMEOUT", 60, int)
 LOCAL_TIMEOUT = _env_num("CLEEN_LOCAL_TIMEOUT", 120, int)
+
+
+# --------------------------------------------------------------------------------
+# COMPUTER-CONTROL TOOLS (the owner 2026-09-30: "whenever we change to any model it
+# has control of my whole entire computer... even small models"). The agent layer in
+# agent.py gives every model routed through cleen real hands+eyes (open browser/apps,
+# run commands, search the web, type, screenshot). All OFF by default for the plain
+# OpenAI API (an editor hitting /v1 must get a normal answer, never a tool loop); a
+# caller opts in per request (body cleen_tools:true / header X-Cleen-Tools / mode
+# 'agent'), and ghost.py flips it on so the owner's models act from his phone.
+# --------------------------------------------------------------------------------
+TOOLS_DEFAULT = _env_bool("CLEEN_TOOLS", False)          # global default for the agent layer
+TOOLS_MAX_STEPS = _env_num("CLEEN_TOOLS_MAX_STEPS", 8, int)   # tool calls per answer (anti-loop)
+TOOLS_MAX_RESULT = _env_num("CLEEN_TOOLS_MAX_RESULT", 6000, int)  # cap a tool result fed back
+TOOLS_CMD_TIMEOUT = _env_num("CLEEN_TOOLS_CMD_TIMEOUT", 60, int)  # run_command timeout (s)
+TOOLS_LOG = os.environ.get("CLEEN_TOOLS_LOG", os.path.join(ROOT, "agent_actions.jsonl"))
+TOOLS_EXTRA_DIR = os.environ.get("CLEEN_TOOLS_EXTRA_DIR", "")  # private per-machine tool plugins
+
+# Which tools a caller may use (None = all registered). Lets a deploy ship a narrower
+# surface than this box runs. Empty env => all.
+_allow = [x.strip() for x in os.environ.get("CLEEN_TOOLS_ALLOW", "").split(",") if x.strip()]
+TOOLS_ALLOW = _allow or None
+
+# run_command safety: a SMALL denylist of catastrophic, irreversible, non-task commands
+# (disk-wipe class) so a fumbling small model can't brick the machine -- everything else
+# is allowed (full control is the point). Tunable via CLEEN_TOOLS_CMD_DENY (|-separated
+# regexes, REPLACES the defaults). These are matched case-insensitively against the command.
+_DEFAULT_CMD_DENY = [
+    r"\bformat\b\s+[a-z]:",                 # format C:
+    r"\bdiskpart\b",                        # scriptable disk wipe
+    r"\bcipher\s+/w",                       # secure-wipe free space
+    r"\b(rmdir|rd)\b.*\s/s.*\s[a-z]:\\?\s*$",   # rd /s on a drive root
+    r"\bdel\b.*\s/[sq].*\\windows\b",       # del /s|/q under C:\Windows
+    r"\brm\s+-rf?\s+(/|[a-z]:[\\/]?)(\s|$)",    # rm -rf / or rm -rf C:\
+    r"\bmkfs\b", r"\bdd\b\s+if=.*of=/dev/",
+]
+_deny_env = os.environ.get("CLEEN_TOOLS_CMD_DENY", "").strip()
+TOOLS_CMD_DENY = [p for p in _deny_env.split("|") if p.strip()] if _deny_env else _DEFAULT_CMD_DENY
 
 
 def _provider_base(name):

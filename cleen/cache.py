@@ -1,6 +1,6 @@
 """cleen.cpp response cache -- the biggest "faster than llama" win.
 
-A raw inference engine (llama.cpp, a bare llama-server, Ollama) has NO response
+A raw inference engine (llama.cpp, a bare llama-server, the default runtime) has NO response
 cache: ask the same question twice and it re-runs the full forward pass twice. cleen
 is a *router*, so it can remember. This is an exact-match cache: identical request in
 -> stored answer out, in milliseconds, no GPU, no tokens billed.
